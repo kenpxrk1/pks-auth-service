@@ -1,0 +1,7 @@
+databaseChangeLog:
+  - include:
+      file: "01-create-account-table.yaml"
+      relativeToChangelogFile: true
+  - include:
+      file: "02-create-token-table.yaml"
+      relativeToChangelogFile: true

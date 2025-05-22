@@ -1,0 +1,5 @@
+spring:
+  application:
+    name: odfp-auth-service
+  profiles:
+    active: local
