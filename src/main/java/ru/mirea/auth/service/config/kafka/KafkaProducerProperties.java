@@ -28,8 +28,8 @@ public class KafkaProducerProperties {
         private int batchSize;
         private int lingerMs;
         private int bufferMemory;
-        private int deliveryTimeoutMs;  // Новый параметр: максимальное время доставки
-        private int requestTimeoutMs;   // Новый параметр: таймаут ожидания ответа от брокера
-        private int maxBlockMs;        // Новый параметр: таймаут блокировки
+        private int deliveryTimeoutMs;
+        private int requestTimeoutMs;
+        private int maxBlockMs;
     }
 }
