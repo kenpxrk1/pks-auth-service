@@ -1,5 +1,6 @@
 package ru.mirea.auth.service.mapper;
 
+import ru.mirea.auth.service.dto.event.UserCreateEventDto;
 import ru.mirea.auth.service.dto.request.RegisterRequestDto;
 import ru.mirea.auth.service.model.AccountEntity;
 import org.mapstruct.Context;
@@ -20,4 +21,14 @@ public interface AccountMapper {
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     AccountEntity toEntity(RegisterRequestDto dto, @Context PasswordEncoder passwordEncoder);
+
+    @Mapping(source = "entity.externalId", target = "externalId")
+    @Mapping(source = "dto.firstName", target = "firstName")
+    @Mapping(source = "dto.lastName", target = "lastName")
+    @Mapping(source = "dto.phoneNumber", target = "phoneNumber")
+    @Mapping(source = "entity.createdAt", target = "createdAt")
+    @Mapping(source = "dto.dateOfBirth", target = "dateOfBirth")
+    UserCreateEventDto toUserCreatedEventDto(AccountEntity entity, RegisterRequestDto dto);
 }
+
+
