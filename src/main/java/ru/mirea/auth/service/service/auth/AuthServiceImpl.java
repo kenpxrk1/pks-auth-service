@@ -6,6 +6,8 @@ import ru.mirea.auth.service.dto.request.RegisterRequestDto;
 import ru.mirea.auth.service.dto.response.LoginResponseDto;
 import ru.mirea.auth.service.dto.response.RefreshTokenResponseDto;
 import ru.mirea.auth.service.exception.EntityAlreadyExistsException;
+import ru.mirea.auth.service.exception.KafkaPublishException;
+import ru.mirea.auth.service.kafka.UserRegistrationProducer;
 import ru.mirea.auth.service.mapper.AccountMapper;
 import ru.mirea.auth.service.mapper.TokenMapper;
 import ru.mirea.auth.service.model.AccountEntity;
@@ -45,6 +47,7 @@ public class AuthServiceImpl implements AuthService {
     private final TokenMapper tokenMapper;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authManager;
+    private final UserRegistrationProducer userRegistrationProducer;
 
     @Transactional
     @Override
@@ -69,7 +72,7 @@ public class AuthServiceImpl implements AuthService {
         return tokenMapper.toLoginResponse(accessToken, refreshToken);
     }
 
-
+    @Transactional
     @Override
     public void register(RegisterRequestDto registerDto) {
         log.info("Handle registry request for phone_number={}", registerDto.getPhoneNumber());
@@ -79,7 +82,20 @@ public class AuthServiceImpl implements AuthService {
                     "Account with phoneNumber " + registerDto.getPhoneNumber() + " already exists");
         }
 
-        accountService.save(mapper.toEntity(registerDto, passwordEncoder));
+        AccountEntity accountEntity = mapper.toEntity(registerDto, passwordEncoder);
+
+        accountService.save(accountEntity);
+
+        log.info("User with phone_number={} successfully registered", accountEntity.getPhoneNumber());
+
+        try {
+            userRegistrationProducer.sendUserCreatedEvent(
+                    mapper.toUserCreatedEventDto(accountEntity, registerDto)
+            );
+        } catch (Exception e) {
+            log.error("Failed to send event to Kafka. Rolling back user registration", e);
+            throw new KafkaPublishException("User registration failed due to Kafka outage");
+        }
     }
 
 
