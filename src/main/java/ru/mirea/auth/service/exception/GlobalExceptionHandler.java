@@ -45,7 +45,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponseDto> handleAuthenticationException(KafkaSerializationException e) {
         ErrorResponseDto response = new ErrorResponseDto(e.getMessage());
         log.error(e.getMessage(), e);
-        return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(EntityAlreadyExistsException.class)
