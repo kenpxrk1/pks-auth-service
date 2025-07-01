@@ -1,5 +1,7 @@
 package ru.mirea.auth.service.controller;
 
+import jakarta.validation.Valid;
+import org.springframework.validation.annotation.Validated;
 import ru.mirea.auth.service.dto.request.LoginRequestDto;
 import ru.mirea.auth.service.dto.request.RefreshTokenRequestDto;
 import ru.mirea.auth.service.dto.request.RegisterRequestDto;
@@ -21,18 +23,18 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("sign-up")
-    public ResponseEntity<?> register(@RequestBody RegisterRequestDto registerDto) {
+    public ResponseEntity<?> register(@RequestBody @Valid RegisterRequestDto registerDto) {
         authService.register(registerDto);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @PostMapping("sign-in")
-    public ResponseEntity<LoginResponseDto> login(@RequestBody LoginRequestDto loginDto) {
+    public ResponseEntity<LoginResponseDto> login(@RequestBody @Valid LoginRequestDto loginDto) {
         return ResponseEntity.ok(authService.login(loginDto));
     }
 
     @PostMapping("refresh")
-    public ResponseEntity<RefreshTokenResponseDto> refresh(@RequestBody RefreshTokenRequestDto requestDto) {
+    public ResponseEntity<RefreshTokenResponseDto> refresh(@RequestBody @Valid RefreshTokenRequestDto requestDto) {
         return ResponseEntity.ok(authService.refreshToken(requestDto));
     }
 }

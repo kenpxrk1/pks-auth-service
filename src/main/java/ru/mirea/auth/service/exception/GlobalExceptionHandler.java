@@ -34,6 +34,20 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
     }
 
+    @ExceptionHandler(KafkaPublishException.class)
+    public ResponseEntity<ErrorResponseDto> handleAuthenticationException(KafkaPublishException e) {
+        ErrorResponseDto response = new ErrorResponseDto(e.getMessage());
+        log.error(e.getMessage(), e);
+        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @ExceptionHandler(KafkaSerializationException.class)
+    public ResponseEntity<ErrorResponseDto> handleAuthenticationException(KafkaSerializationException e) {
+        ErrorResponseDto response = new ErrorResponseDto(e.getMessage());
+        log.error(e.getMessage(), e);
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
     @ExceptionHandler(EntityAlreadyExistsException.class)
     private ResponseEntity<ErrorResponseDto> handleException(EntityAlreadyExistsException e) {
         ErrorResponseDto response = new ErrorResponseDto(e.getMessage());

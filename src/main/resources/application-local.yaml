@@ -25,6 +25,26 @@ spring:
     default-schema: auth-service-db
     enabled: true
 
+  kafka:
+    producers:
+      registration:
+        key-serializer: org.apache.kafka.common.serialization.StringSerializer
+        value-serializer: org.apache.kafka.common.serialization.StringSerializer
+        acks: all
+        enable-idempotence: true
+        retries: 3
+        max-in-flight-requests-per-connection: 5
+        batch-size: 16384
+        linger-ms: 0
+        buffer-memory: 33554432
+        delivery-timeout-ms: 5000
+        request-timeout-ms: 3000
+        max-block-ms: 3000
+    bootstrap-servers: localhost:9092
+
+topic:
+  user-registration: user-registration-topic
+
 jwt:
   secret-key: co7IB8BVZ2ZCWoyjnKbrX4ByykVOvY38vtv2DNK9kN4=
   expire-time-access-token: 900000
