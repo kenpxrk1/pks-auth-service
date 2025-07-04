@@ -17,15 +17,15 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @NoArgsConstructor
 public class RegisterRequestDto {
-    @NotEmpty
+    @NotEmpty(message = "Name must not be empty")
     private String firstName;
-    @NotEmpty
+    @NotEmpty(message = "Second name must not be empty")
     private String lastName;
-    @Size(min = 11, max = 11)
+    @Size(min = 11, max = 11, message = "Phone number length must be 11 characters")
     private String phoneNumber;
-    @Size(min = 8)
+    @Size(min = 8, message = "Password must be at least 8 characters length")
     private String password;
-    @Past
+    @Past(message = "Date of birth must be in past")
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate dateOfBirth;
 }

@@ -5,15 +5,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MvcResult;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
-import org.testcontainers.utility.DockerImageName;
 import ru.mirea.auth.service.dto.event.UserCreateEventDto;
 import ru.mirea.auth.service.dto.response.LoginResponseDto;
 import ru.mirea.auth.service.repository.AccountRepository;
@@ -28,27 +22,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @Testcontainers
 @SpringBootTest
-public class AuthControllerTest extends AbstractInitialization{
-
-    @Container
-    protected static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine")
-            .withDatabaseName("testdb")
-            .withUsername("test")
-            .withPassword("test")
-            .withInitScript("init-schema.sql");
-
-    @DynamicPropertySource
-    static void setDatasourceProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", postgres::getJdbcUrl);
-        registry.add("spring.datasource.username", postgres::getUsername);
-        registry.add("spring.datasource.password", postgres::getPassword);
-    }
+public class AuthControllerTest extends AbstractInitialization {
 
     @Autowired
     private AccountRepository accountRepository;
 
     @BeforeEach
-    void setUp(){
+    public void setUp() {
         accountRepository.deleteAll();
 
         doNothing().when(userRegistrationProducer)
@@ -56,7 +36,7 @@ public class AuthControllerTest extends AbstractInitialization{
     }
 
     @Test
-    void signUp_successful() throws Exception {
+    public void signUp_successful() throws Exception {
         mvc.perform(post(BASE_URL + "sign-up")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(correctRegJson)
@@ -65,52 +45,85 @@ public class AuthControllerTest extends AbstractInitialization{
     }
 
     @Test
-    void signUp_emptyName() throws Exception{
+    public void signUp_emptyName() throws Exception {
         mvc.perform(post(BASE_URL + "sign-up")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(emptyNameRegJson)
                 )
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$[0].message").exists())
+                .andExpect(jsonPath("$[0].message")
+                        .value("Name must not be empty"));
     }
 
     @Test
-    void signUp_emptySecondName() throws Exception{
+    public void signUp_emptySecondName() throws Exception {
         mvc.perform(post(BASE_URL + "sign-up")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(emptySecondNameRegJson)
                 )
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$[0].message").exists())
+                .andExpect(jsonPath("$[0].message")
+                        .value("Second name must not be empty"));
     }
 
     @Test
-    void signUp_invalidPhoneNumber() throws Exception {
+    public void signUp_invalidPhoneNumber() throws Exception {
         mvc.perform(post(BASE_URL + "sign-up")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(shortNumberRegJson)
                 )
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$[0].message").exists())
+                .andExpect(jsonPath("$[0].message")
+                        .value("Phone number length must be 11 characters"));
     }
 
     @Test
-    void signUp_invalidPassword() throws Exception{
+    public void signUp_invalidPassword() throws Exception {
         mvc.perform(post(BASE_URL + "sign-up")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(shortPasswordRegJson)
                 )
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$[0].message").exists())
+                .andExpect(jsonPath("$[0].message")
+                        .value("Password must be at least 8 characters length"));
     }
 
     @Test
-    void singUp_invalidDate() throws Exception{
+    public void singUp_invalidDate() throws Exception {
         mvc.perform(post(BASE_URL + "sign-up")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(invalidDateOfBirthRegJson)
                 )
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$[0].message").exists())
+                .andExpect(jsonPath("$[0].message")
+                        .value("Date of birth must be in past"));
     }
 
     @Test
-    void login_success() throws Exception{
+    public void signUp_numberAlreadyExists() throws Exception {
+        mvc.perform(post(BASE_URL + "sign-up")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(correctRegJson)
+                )
+                .andExpect(status().isCreated());
+
+        mvc.perform(post(BASE_URL + "sign-up")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(correctRegJson)
+                )
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").exists())
+                .andExpect(jsonPath("$.message")
+                        .value("Account with phoneNumber " + correctPhoneNumber + " already exists"));
+    }
+
+    @Test
+    public void login_success() throws Exception {
         mvc.perform(post(BASE_URL + "sign-up")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(correctRegJson)
@@ -127,22 +140,19 @@ public class AuthControllerTest extends AbstractInitialization{
     }
 
     @Test
-    void login_noSuchPhoneNumber() throws Exception{
-        mvc.perform(post(BASE_URL + "sign-up")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(correctRegJson)
-                )
-                .andExpect(status().isCreated());
-
+    public void login_noSuchPhoneNumber() throws Exception {
         mvc.perform(post(BASE_URL + "sign-in")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(noSuchNumberLoginJson)
+                        .content(correctLoginJson)
                 )
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").exists())
+                .andExpect(jsonPath("$.message")
+                        .value("Account with login '" + correctPhoneNumber + "' not found"));
     }
 
     @Test
-    void login_wrongPass() throws Exception{
+    public void login_wrongPass() throws Exception {
         mvc.perform(post(BASE_URL + "sign-up")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(correctRegJson)
@@ -153,11 +163,14 @@ public class AuthControllerTest extends AbstractInitialization{
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(wrongPassLoginJson)
                 )
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").exists())
+                .andExpect(jsonPath("$.message")
+                        .value("Bad credentials"));
     }
 
     @Test
-    void login_shortPhoneNumber() throws Exception{
+    public void login_shortPhoneNumber() throws Exception {
         mvc.perform(post(BASE_URL + "sign-up")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(correctRegJson)
@@ -168,11 +181,15 @@ public class AuthControllerTest extends AbstractInitialization{
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(shortNumberLoginJson)
                 )
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$[0].message").exists())
+                .andExpect(jsonPath("$[0].message")
+                        .value("Phone number length must be 11 characters"));
+
     }
 
     @Test
-    void login_shortPassword() throws Exception{
+    public void login_shortPassword() throws Exception {
         mvc.perform(post(BASE_URL + "sign-up")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(correctRegJson)
@@ -183,15 +200,18 @@ public class AuthControllerTest extends AbstractInitialization{
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(shortPasswordLoginJson)
                 )
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$[0].message").exists())
+                .andExpect(jsonPath("$[0].message")
+                        .value("Password must be at least 8 characters length"));
     }
 
     @Test
-    void refresh_success() throws Exception{
+    public void refresh_success() throws Exception {
         mvc.perform(post(BASE_URL + "sign-up")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(correctRegJson)
-                );
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(correctRegJson)
+        );
 
         MvcResult mvcResult = mvc.perform(post(BASE_URL + "sign-in")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -221,20 +241,26 @@ public class AuthControllerTest extends AbstractInitialization{
     }
 
     @Test
-    void refresh_emptyRefreshToken() throws Exception {
+    public void refresh_emptyRefreshToken() throws Exception {
         mvc.perform(post(BASE_URL + "refresh")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(emptyRefreshTokenJson)
                 )
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$[0].message").exists())
+                .andExpect(jsonPath("$[0].message")
+                        .value("Refresh token must not be null"));
     }
 
     @Test
-    void refresh_noSuchToken() throws Exception{
+    public void refresh_noSuchToken() throws Exception {
         mvc.perform(post(BASE_URL + "refresh")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(noSuchRefreshTokenJson)
                 )
-                .andExpect(status().isNotFound());
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").exists())
+                .andExpect(jsonPath("$.message")
+                        .value("Token '" + noSuchRefreshToken + "' is invalid"));
     }
 }

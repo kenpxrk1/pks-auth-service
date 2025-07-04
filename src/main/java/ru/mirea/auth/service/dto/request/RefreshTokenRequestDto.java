@@ -7,6 +7,6 @@ import java.util.UUID;
 
 @Data
 public class RefreshTokenRequestDto {
-    @NotNull
+    @NotNull(message = "Refresh token must not be null")
     private UUID refreshToken;
 }

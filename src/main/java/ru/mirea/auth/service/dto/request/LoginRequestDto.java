@@ -9,8 +9,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class LoginRequestDto {
-    @Size(min = 11, max = 11)
+    @Size(min = 11, max = 11, message = "Phone number length must be 11 characters")
     private String phoneNumber;
-    @Size(min = 8)
+    @Size(min = 8, message = "Password must be at least 8 characters length")
     private String password;
 }
