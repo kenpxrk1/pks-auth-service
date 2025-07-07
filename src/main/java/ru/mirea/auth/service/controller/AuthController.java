@@ -1,5 +1,10 @@
 package ru.mirea.auth.service.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import org.springframework.validation.annotation.Validated;
 import ru.mirea.auth.service.dto.request.LoginRequestDto;
 import ru.mirea.auth.service.dto.request.RefreshTokenRequestDto;
 import ru.mirea.auth.service.dto.request.RegisterRequestDto;
@@ -17,22 +22,47 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("api/v1/auth")
 @RequiredArgsConstructor
+@Tag(name = "Auth controller", description = "operations to authenticate user")
 public class AuthController {
     private final AuthService authService;
 
     @PostMapping("sign-up")
-    public ResponseEntity<?> register(@RequestBody RegisterRequestDto registerDto) {
+    @Operation(
+            summary = "Register user by dto",
+            description = "Returns 'created' status",
+            responses = {
+                    @ApiResponse(responseCode = "201", description = "Success"),
+                    @ApiResponse(responseCode = "400", description = "Incorrect dto"),
+                    @ApiResponse(responseCode = "409", description = "Account with phoneNumber *** already exists")
+            })
+    public ResponseEntity<?> register(@RequestBody @Valid RegisterRequestDto registerDto) {
         authService.register(registerDto);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @PostMapping("sign-in")
-    public ResponseEntity<LoginResponseDto> login(@RequestBody LoginRequestDto loginDto) {
+    @Operation(
+            summary = "Login user by dto",
+            description = "Returns 'ok' status with refresh and access tokens",
+            responses = {
+                    @ApiResponse(responseCode = "201", description = "Success"),
+                    @ApiResponse(responseCode = "400", description = "Incorrect dto"),
+                    @ApiResponse(responseCode = "409", description = "Account with login *** not exists")
+            })
+    public ResponseEntity<LoginResponseDto> login(@RequestBody @Valid LoginRequestDto loginDto) {
         return ResponseEntity.ok(authService.login(loginDto));
     }
 
     @PostMapping("refresh")
-    public ResponseEntity<RefreshTokenResponseDto> refresh(@RequestBody RefreshTokenRequestDto requestDto) {
+    @Operation(
+            summary = "Get new access and refresh tokens by refresh token",
+            description = "Returns 'ok' status with refresh and access keys",
+            responses = {
+                    @ApiResponse(responseCode = "201", description = "Success"),
+                    @ApiResponse(responseCode = "400", description = "Incorrect dto"),
+                    @ApiResponse(responseCode = "404", description = "Invalid token")
+            })
+    public ResponseEntity<RefreshTokenResponseDto> refresh(@RequestBody @Valid RefreshTokenRequestDto requestDto) {
         return ResponseEntity.ok(authService.refreshToken(requestDto));
     }
 }
